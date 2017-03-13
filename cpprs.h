@@ -1,6 +1,6 @@
 #pragma once
 
-//note there are complicated logics that you MAY NOT want to implement with pure macros. E.g. you have a macro with lblXXX parameters. And it needs to be called from another macro, which needs to run different logic for each lblXXX case. Yet you MAY NOT want to write any label in macro because it pollutes namespace!
+//note there are complicated programs that you MAY NOT want to implement with pure macros. E.g. you have a macro with lblXXX parameters. And it needs to be called from another macro, which needs to run different logic for each lblXXX case. Yet you MAY NOT want to write any label in macro because it pollutes namespace!
 //note you CAN use label in macro! But even if you make the label name very long like xxx_MACRO_NAME, that still means you CANNOT use this macro twice within a function! bc "A label name is the only kind of identifier that has function scope".
 //note one solution is to uip (unique identifier prefix, for labels, variable, etc.)
 //you can manually write different uip, or you can use __COUNTER__. (it's not standard ISO C, but it should be fine, just like #pragma once. Even if someday you use a compiler that doesn't support __COUNTER__, you can still "run your code through a preprocessor that does support it before feeding it into the compiler", or even write a small program yourself, to search all source code and replace __COUNTER__ with integers!)
