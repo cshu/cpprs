@@ -27,7 +27,7 @@ NNNs(__COUNTER__)
 #define UI_IN_LIMITED_SCOPE2 ui_in_limited_scope2
 #define UI_IN_LIMITED_SCOPE3 ui_in_limited_scope3
 #define UI_IN_LIMITED_SCOPE4 ui_in_limited_scope4
-#define TOKEN_PASTING_2(x,y) x ## y
+#define TOKEN_PASTING_2(x,y) x ## y//can be used to concat L and "str literal"
 #define X_TOKEN_PASTING_2(x,y) TOKEN_PASTING_2(x,y)
 #define TOKEN_PASTING_3(x,y,z) x ## y ## z
 #define X_TOKEN_PASTING_3(x,y,z) TOKEN_PASTING_3(x,y,z)
@@ -62,6 +62,11 @@ NNNs(__COUNTER__)
 //static int global_tmp_int_buf;
 //static INT_FOR_INT_SSIZE_T global_tmp_int_for_int_ssize_t_buf;
 
+#define VALID_PH_PTR ""//there are cases in which you just need a placeholder pointer (with object size of 0), but nullptr is not valid to use
+template<class T> T ret_arg_or_valid_ph_ptr(T ptr){
+	if(ptr)return ptr;
+	return VALID_PH_PTR;
+}
 #define EQ_NULL(ptr) (ptr==NULL)//note (!ptr) should be enough, but on some old embedded platforms NULL is not 0. (Though the lastest C standard mandates it must equal 0)
 #define SAFEST_TYPE_TO_READ_UNINITIALIZED_MEM unsigned char//"EXP33-EX1: Reading uninitialized memory by an lvalue of type unsigned char does not trigger undefined behavior. The unsigned char type is defined to not have a trap representation (see the C Standard, 6.2.6.1, paragraph 3), which allows for moving bytes without knowing if they are initialized. However, on some architectures, such as the Intel Itanium, registers have a bit to indicate whether or not they have been initialized. The C Standard, 6.3.2.1, paragraph 2, allows such implementations to cause a trap for an object that never had its address taken and is stored in a register if such an object is referred to in any way."
 
@@ -88,6 +93,9 @@ NNNs(__COUNTER__)
 //so checking len is only useful when pointers can be NULL
 #define MEMCPY_IF_LEN(d,s,n) ( (n) ? memcpy(d,s,n) : (d) )
 #define MEMCMP_IF_LEN(x,y,n) ( (n) ? memcmp(x,y,n) : 0 )
+int memcmp_if_len(const void* x, const void* y, size_t count){
+	return MEMCMP_IF_LEN(x,y,count);
+}
 #define MEMMOVE_IF_LEN(o,d,n) ( (n) ? memmove(o,d,n) : (o) )
 
 #define MEMCHR_FROM_OFFSET(s,c,len,off) ( memchr( (s)+(off),(c),(len)-(off) ) )
@@ -305,7 +313,7 @@ struct pvoid_with_pend_n_capacity{void *obj; void *pend; size_t cap;};
 #include <iomanip>
 
 //1st method for throwing from destructor
-#define IF_SUE_EQ_UE_THROW {if(sue==uncaught_exceptions)throw;}
+#define IF_SUE_EQ_UE_THROW {if(sue==std::uncaught_exceptions())throw;}
 #define TRY_TEM_SET_SUE try{tem_set_sue temsetsueph;
 #define CATCH_IF_SUE_EQ_UE_THROW }catch(...){IF_SUE_EQ_UE_THROW}
 thread_local int sue;//stored(saved) uncaught_exceptions
@@ -407,8 +415,16 @@ void insert_end_literal_with_nul(ContainerT &v,LiteralT &l){
 	v.insert(v.end(),l,(const char *)(&l+1));
 }
 
+#include <random>
+template<class IntT>
+struct integer_good_randomness{
+	std::mt19937 rngmt{std::random_device()()};
+	std::uniform_int_distribution<IntT> uidist{std::numeric_limits<IntT>::min(), std::numeric_limits<IntT>::max()};
+	auto gener(void){
+		return uidist(rngmt);
+	}
+};
 
-/***C***/
 uint32_t u32frombytesle(unsigned char *uc){
     uint32_t tbr=uc[3];
     tbr*=256;
@@ -426,5 +442,11 @@ void write_u32le(void *b, uint32_t u){
 	u/=0x100;
 	*((unsigned char *)b+2)=u%0x100;
 	*((unsigned char *)b+3)=u/0x100;
+}
+//Big-endian functions can be implemented with `htonl` and `ntohl`.
+template<class T>
+void resize_write_u32le(T &b,uint32_t u){
+	b.resize(b.size()+4);
+	write_u32le(b.data()+b.size()-4,u);
 }
 

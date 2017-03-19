@@ -1,3 +1,4 @@
+#pragma once
 
 /*
 ** Check to see if this machine uses EBCDIC.  (Yes, believe it or
@@ -54,7 +55,7 @@ const unsigned char rs_sqlite3UpperToLower[] = {
 #endif
 };
 
-
+//should work fine with Unicode in UTF-8 because non-ascii character never contains byte smaller than 0x80?
 #define MEMICMPu(ui,l,r,n,caseNe,caseEq){\
 	auto ui##_col=(const unsigned char *)(l);\
 	auto ui##_cor=(const unsigned char *)(r);\
