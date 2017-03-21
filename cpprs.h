@@ -18,6 +18,13 @@ NNNs(__COUNTER__)
 //note you can still use very long and complicated identifier in macros which don't take caseXX arguments. (there should be no chance to shadow)
 //or you can use UI_IN_LIMITED_SCOPE instead (still there should be no chance to shadow)
 //note it's preferred to use caseXXX parameter only once (i.e. expand only once). Bc when you have {... ui##label: ...} passed as a caseXXX argument, it causes error for multiple expansions. (still it's not mandatory because you can use goto to jump out instead of embedding lots of code in caseXXX arg)
+//-Wshadow helps when you accidentally write something expanding to int x=1;{int x=x;}. The inner x is not copying the outer x. This is similar to javascript `var x=1;(()=>{var x=x;})();`. Think of it as something like hoisting. (declaration always happens before assignment. in c++ it's scope hoisting rather than func hoisting, though. in contrast, `x:=1;{x:=x;}` works in go.
+
+#ifdef __cplusplus//be careful. only use this macro when the function always works in the same way.
+#define CPPRS_COMMON_SP inline
+#else
+#define CPPRS_COMMON_SP static
+#endif
 
 #define NOOP_WITHOUT_COMPILER_WARNING ((void)0)//note you cast any variable/return value to (void) to tell compiler to ignore your unused parameter/return value
 #define NO_OPERATION(...) __VA_ARGS__
@@ -93,7 +100,7 @@ template<class T> T ret_arg_or_valid_ph_ptr(T ptr){
 //so checking len is only useful when pointers can be NULL
 #define MEMCPY_IF_LEN(d,s,n) ( (n) ? memcpy(d,s,n) : (d) )
 #define MEMCMP_IF_LEN(x,y,n) ( (n) ? memcmp(x,y,n) : 0 )
-int memcmp_if_len(const void* x, const void* y, size_t count){
+CPPRS_COMMON_SP int memcmp_if_len(const void* x, const void* y, size_t count){
 	return MEMCMP_IF_LEN(x,y,count);
 }
 #define MEMMOVE_IF_LEN(o,d,n) ( (n) ? memmove(o,d,n) : (o) )
@@ -142,7 +149,7 @@ int memcmp_if_len(const void* x, const void* y, size_t count){
 #define CHAR_OF_LITERAL(c) (c)//note 'unicode/multiple char(s)' may be of int type, and/or negative, in this case, nothing is done
 #else
 #define INT_OF_LITERAL(c) (c)
-function char reinterpret_unsigned_char_as_char(unsigned char uc){ return *(char *) &uc; }
+CPPRS_COMMON_SP char reinterpret_unsigned_char_as_char(unsigned char uc){ return *(char *) &uc; }
 #define CHAR_OF_LITERAL(c) (reinterpret_unsigned_char_as_char(c))//possible implementation-defined behavior/signal for simple cast like (char)c?
 #endif
 
@@ -313,25 +320,32 @@ struct pvoid_with_pend_n_capacity{void *obj; void *pend; size_t cap;};
 #include <iomanip>
 
 //1st method for throwing from destructor
-#define IF_SUE_EQ_UE_THROW {if(sue==std::uncaught_exceptions())throw;}
+#define IF_SUE_EQ_UE_THROW {if(sue()==std::uncaught_exceptions())throw;}
 #define TRY_TEM_SET_SUE try{tem_set_sue temsetsueph;
 #define CATCH_IF_SUE_EQ_UE_THROW }catch(...){IF_SUE_EQ_UE_THROW}
-thread_local int sue;//stored(saved) uncaught_exceptions
-class tem_set_sue{
-	int prev=sue;
+inline auto &sue(void)noexcept{//for C++17 you can use an inline variable, instead of this function?
+	//When thread_local is applied to a variable of block scope the storage-class-specifier static is implied if no other storage-class-specifier appears in the decl-specifier-seq.
+	thread_local int sue_;//stored(saved) uncaught_exceptions
+	return sue_;
+}
+struct tem_set_sue{
+	int prev=sue();
 	tem_set_sue(){
-		sue=std::uncaught_exceptions();
+		sue()=std::uncaught_exceptions();
 	}
 	~tem_set_sue(){
-		sue=prev;
+		sue()=prev;
 	}
 };
 
-//2nd method for throwing from destructor (unusable if used as class member)
-thread_local bool sue_;//note you cannot reuse sue. must use a separate variable. in case you use both methods in a program.
+//2nd method for throwing from destructor (unusable for throwable class member)
+inline auto &sue2(void){//for C++17 you can use an inline variable, instead of this function?
+	thread_local bool sue2_;//note you cannot reuse sue. must use a separate variable. in case you use both methods in a program.
+	return sue2_;
+}
 #define INIT_TRYs(init) {init try{
-#define CATCH_SET_SUE_THROWs(stmts_noexcept) }catch(...){stmts_noexcept sue_=1; throw;}}//stmts_noexcept is optional argument
-#define AUTO_COPY_OF_SUE_CLEAR_SUE_TRYs bool cp_sue_=sue_;sue_=0;try{//dtor should begin with this
+#define CATCH_SET_SUE_THROWs(stmts_noexcept) }catch(...){stmts_noexcept sue2()=1; throw;}}//stmts_noexcept is optional argument
+#define AUTO_COPY_OF_SUE_CLEAR_SUE_TRYs bool cp_sue_=sue2();sue2()=0;try{//dtor should begin with this
 #define CATCH_IF_CHECK_COPY_OF_SUE_THROWs }catch(...){if(!cp_sue_)throw;}//dtor should end with this
 
 //3rd method for throwing from destructor (not good?)
@@ -386,7 +400,7 @@ template<bool b> void static_assert_in_template(){
 #define ASSERT_DEBUG_THROWs ASSERT_THROWs
 #endif
 
-std::string strftime_YmdHMS_localtime_ts_now(void){
+CPPRS_COMMON_SP std::string strftime_YmdHMS_localtime_ts_now(void){
 	char buf[15];
 	time_t t_=std::time(nullptr);
 	if(t_==(std::time_t)(-1)) throw std::runtime_error("Time err "+STR_FILE_FUNC_XSTR_LINE);
@@ -395,7 +409,7 @@ std::string strftime_YmdHMS_localtime_ts_now(void){
 	strftime(buf,15,"%Y%m%d%H%M%S",&tm_);
 	return std::string(buf);
 }
-void clog_put_time_YmdHMS_localtime_ts_now(void){
+CPPRS_COMMON_SP void clog_put_time_YmdHMS_localtime_ts_now(void){
 	time_t t_;
 	tm tm_;
 	LOCALTIME_TSs(&t_,&tm_)
@@ -425,17 +439,17 @@ struct integer_good_randomness{
 	}
 };
 
-uint32_t u32frombytesle(unsigned char *uc){
-    uint32_t tbr=uc[3];
-    tbr*=256;
-    tbr+=uc[2];
-    tbr*=256;
-    tbr+=uc[1];
-    tbr*=256;
-    tbr+=uc[0];
-    return tbr;
+CPPRS_COMMON_SP uint32_t u32frombytesle(unsigned char *uc){
+	uint32_t tbr=uc[3];
+	tbr*=256;
+	tbr+=uc[2];
+	tbr*=256;
+	tbr+=uc[1];
+	tbr*=256;
+	tbr+=uc[0];
+	return tbr;
 }
-void write_u32le(void *b, uint32_t u){
+CPPRS_COMMON_SP void write_u32le(void *b, uint32_t u){
 	*(unsigned char *)b=u%0x100;
 	u/=0x100;
 	*((unsigned char *)b+1)=u%0x100;

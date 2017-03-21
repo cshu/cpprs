@@ -1,6 +1,7 @@
 #pragma once
+#include "cpprs.h"
 
-void sdlgeterrorwritelog(void){
+CPPRS_COMMON_SP void sdlgeterrorwritelog(void){
 	auto sdlerr=SDL_GetError();
 	if(sdlerr[0]){
 		std::clog<<"SDL Error: "<<sdlerr<<'\n';
