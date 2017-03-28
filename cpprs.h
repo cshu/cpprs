@@ -79,6 +79,12 @@ template<class T> T ret_arg_or_valid_ph_ptr(T ptr){
 
 //note type naming should not use _t as suffix bc posix regard that as reserved names
 
+#ifdef _WIN32
+#define CPPRS_LINK_WITH_C __declspec( dllexport )
+#else
+#define CPPRS_LINK_WITH_C
+#endif
+
 #define XSTR(s) STR(s)
 #define STR(s) #s
 #define COMMA ,
@@ -320,6 +326,8 @@ struct pvoid_with_pend_n_capacity{void *obj; void *pend; size_t cap;};
 #include <iomanip>
 
 //1st method for throwing from destructor
+#if defined(__GNUC__) && __GNUC__<6
+#else
 #define IF_SUE_EQ_UE_THROW {if(sue()==std::uncaught_exceptions())throw;}
 #define TRY_TEM_SET_SUE try{tem_set_sue temsetsueph;
 #define CATCH_IF_SUE_EQ_UE_THROW }catch(...){IF_SUE_EQ_UE_THROW}
@@ -337,6 +345,7 @@ struct tem_set_sue{
 		sue()=prev;
 	}
 };
+#endif
 
 //2nd method for throwing from destructor (unusable for throwable class member)
 inline auto &sue2(void){//for C++17 you can use an inline variable, instead of this function?
@@ -457,6 +466,7 @@ CPPRS_COMMON_SP void write_u32le(void *b, uint32_t u){
 	*((unsigned char *)b+2)=u%0x100;
 	*((unsigned char *)b+3)=u/0x100;
 }
+//note there are more than 2 kinds of endianness in this world.
 //Big-endian functions can be implemented with `htonl` and `ntohl`.
 template<class T>
 void resize_write_u32le(T &b,uint32_t u){
