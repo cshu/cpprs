@@ -144,6 +144,9 @@ CPPRS_COMMON_SP int memcmp_if_len(const void* x, const void* y, size_t count){
 #define LITERAL_AtoZ_atoz LITERAL_ABCDEFGHIJKLMNOPQRSTUVWXYZ LITERAL_abcdefghijklmnopqrstuvwxyz
 #define LITERAL_0to9_AtoZ_atoz LITERAL_0123456789 LITERAL_AtoZ_atoz
 
+#define LITERAL_LOCALHOSTINBE "\x7F\0\0\1"
+#define HTTP_1_1_ENDOFLINE_MARKER "\r\n"
+
 #ifdef __cplusplus
 #define PUTS_DATE_TIME_STDC_VERSION_CPLUSPLUSs puts(__DATE__ " " __TIME__ " __cplusplus: " XSTR(__cplusplus));
 #else
@@ -448,7 +451,7 @@ struct integer_good_randomness{
 	}
 };
 
-CPPRS_COMMON_SP uint32_t u32frombytesle(unsigned char *uc){
+CPPRS_COMMON_SP uint32_t u32frombytesle(unsigned char *uc){//optimize
 	uint32_t tbr=uc[3];
 	tbr*=256;
 	tbr+=uc[2];
@@ -458,7 +461,7 @@ CPPRS_COMMON_SP uint32_t u32frombytesle(unsigned char *uc){
 	tbr+=uc[0];
 	return tbr;
 }
-CPPRS_COMMON_SP void write_u32le(void *b, uint32_t u){
+CPPRS_COMMON_SP void write_u32le(void *b, uint32_t u){//optimize
 	*(unsigned char *)b=u%0x100;
 	u/=0x100;
 	*((unsigned char *)b+1)=u%0x100;
@@ -474,3 +477,40 @@ void resize_write_u32le(T &b,uint32_t u){
 	write_u32le(b.data()+b.size()-4,u);
 }
 
+//this function is bad? it's slow? it has side effects? it might not even work?
+template<class T>
+auto getfilesizeusingifstream(const T &filenm){
+	std::ifstream ifstre_(filenm,std::ios_base::binary);//::ate can be added to mode? but msvc has bug so it doesn't work on big file?
+	if(!ifstre_)throw std::runtime_error("file err "+STR_FILE_FUNC_XSTR_LINE);
+	//no need to check ret?
+	auto fsi=ifstre_.tellg();//not guaranteed to return 0? though in the real world it always returns 0?
+	if(!ifstre_.seekg(0,std::ios_base::end))throw std::runtime_error("seek err "+STR_FILE_FUNC_XSTR_LINE);
+	auto tbr=ifstre_.tellg()-fsi;
+	ifstre_.close();
+	if(!ifstre_)throw std::runtime_error("close err "+STR_FILE_FUNC_XSTR_LINE);
+	return tbr;
+}
+
+template<class T=uintmax_t,class Tb,class Te>
+T nthpowerof(Tb base,Te ex){//optimize in loop, square the base for the number of bit times in ex, instead of multiplying one by one
+	if(!ex)return 1;
+	assert(ex>=0);
+	T tbr=1;
+	T cob=base;
+	for(;;){
+		if(ex%2)tbr*=cob;
+		if(!(ex/=2))break;
+		cob*=cob;
+	}
+	return tbr;
+}
+
+//? only support char or unsigned char type?
+template<class T>
+auto strstrehexsetfillwrite(T pint,size_t len){
+	std::stringstream oss;
+	oss<<std::hex<<std::setfill('0');
+	for(size_t i=0;i<len;++i)
+		oss<<std::setw(2)<<(unsigned)(unsigned char)pint[i];//note unsigned char doesn't work?
+	return oss;
+}
