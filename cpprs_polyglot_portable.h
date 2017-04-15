@@ -245,7 +245,7 @@ struct filesystem_entry{filesystem_name nm; struct stat st_stat;};
 //note all `rename_XXX` macros here probably fails when the move crosses volume / mounted file system. (For posix you can check the reason like `errno == EXDEV`, but is windows error code also EXDEV? or EACCES?)
 #ifdef _WIN32
 //note windows _wrename can RENAME dir, but cannot MOVE dir to a different path
-#define RENAME_DIR__REPLACE_IF_NAME_ALREADY_EXISTS_AS_EMPTY_DIRu(ui,oldf,newf,caseFail,caseDone){\
+#define RENAME_DIR_s_REPLACE_IF_NAME_ALREADY_EXISTS_AS_EMPTY_DIRu(ui,oldf,newf,caseFail,caseDone){\
         wchar_t *ui##oldw; int ui##oldwcount;\
         wchar_t *ui##neww; int ui##newwcount;\
         MALLOC_N_MULTIBYTETOWIDECHAR_UTF8_STRs(oldf,ui##oldw,ui##oldwcount,{caseFail},{\
@@ -256,7 +256,7 @@ struct filesystem_entry{filesystem_name nm; struct stat st_stat;};
                 }\
         })\
 }
-#define RENAME_FILE__FAIL_IF_NAME_ALREADY_EXISTSu(ui,oldf,newf,caseFail,caseDone){\
+#define RENAME_FILE_s_FAIL_IF_NAME_ALREADY_EXISTSu(ui,oldf,newf,caseFail,caseDone){\
         wchar_t *ui##oldw; int ui##oldwcount;\
         wchar_t *ui##neww; int ui##newwcount;\
         MALLOC_N_MULTIBYTETOWIDECHAR_UTF8_STRs(oldf,ui##oldw,ui##oldwcount,{caseFail},{\
@@ -266,7 +266,7 @@ struct filesystem_entry{filesystem_name nm; struct stat st_stat;};
                 }\
         })\
 }
-#define RENAME_FILE__REPLACE_IF_NAME_ALREADY_EXISTS_AS_FILE(ui,oldf,newf,caseFail,caseDone){\
+#define RENAME_FILE_s_REPLACE_IF_NAME_ALREADY_EXISTS_AS_FILE(ui,oldf,newf,caseFail,caseDone){\
         wchar_t *ui##oldw; int ui##oldwcount;\
         wchar_t *ui##neww; int ui##newwcount;\
         MALLOC_N_MULTIBYTETOWIDECHAR_UTF8_STRs(oldf,ui##oldw,ui##oldwcount,{caseFail},{\
@@ -277,15 +277,15 @@ struct filesystem_entry{filesystem_name nm; struct stat st_stat;};
         })\
 }
 #else
-#define RENAME_DIR__REPLACE_IF_NAME_ALREADY_EXISTS_AS_EMPTY_DIRu(ui,oldf,newf,caseFail,caseDone) {if(rename(oldf,newf)){caseFail}else{caseDone}}
+#define RENAME_DIR_s_REPLACE_IF_NAME_ALREADY_EXISTS_AS_EMPTY_DIRu(ui,oldf,newf,caseFail,caseDone) {if(rename(oldf,newf)){caseFail}else{caseDone}}
 //note check file exists and then rename() can cause race condition: no file when you check, but before rename(), a file is created
-#define RENAME_FILE__FAIL_IF_NAME_ALREADY_EXISTSu(ui,oldf,newf,caseFail,caseDone){\
+#define RENAME_FILE_s_FAIL_IF_NAME_ALREADY_EXISTSu(ui,oldf,newf,caseFail,caseDone){\
         if(link(oldf,newf)){caseFail}else{\
                 if(unlink(oldf)){caseFail}else{caseDone}\
         }\
 }
 
-#define RENAME_FILE__REPLACE_IF_NAME_ALREADY_EXISTS_AS_FILE(ui,oldf,newf,caseFail,caseDone) {if(rename(oldf,newf)){caseFail}else{caseDone}}
+#define RENAME_FILE_s_REPLACE_IF_NAME_ALREADY_EXISTS_AS_FILE(ui,oldf,newf,caseFail,caseDone) {if(rename(oldf,newf)){caseFail}else{caseDone}}
 #endif
 
 

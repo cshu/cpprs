@@ -49,7 +49,6 @@ NNNs(__COUNTER__)
 //note you can use setjmp/longjmp when macro is inconvenient, but C++ zero cost exception try block has less overhead than setjmp (note C++ zero cost exception is not always superb, e.g. when you have 2 common cases to handle, so neither of them are rare.)
 
 #define SETLINE_GOTO(line,label) {line=__LINE__;  goto label;}
-//note _N_ used in macro identifiers means AND, __ used in macro identifiers is for grouping, like parentheses (easier reading)
 //note macro ending with s means stop/sequence point? doesn't need to add semicolon after it, and probably cannot be assigned as an rvalue.
 //note ending with u means ui is the 1st parameter. ending with d means it's a declaration.
 //note caseXXX arguments in macro are treated equally. For all cases, it's okay to leave it blank, execution will leave the macro's scope immediately when a case is encountered and processed (in other words, you CANNOT allow any logic to be executed after a case is run, only `break`/`continue`/`goto` are allowed)
@@ -214,7 +213,7 @@ struct singly_linked_list_of_pvoid{void *obj;struct singly_linked_list_of_pvoid 
 
 #define DOUBLE_X_WITHOUT_Y(x,y) ((x)*2)
 #define AT_LEAST_ONE_N_HALF_OF_X_AS_MULTIPLE_OF_Y(x,y) ( ((x)/(y)/2+1)*3*(y) )
-#define AT_LEAST_ONE_N_HALF_OF__B_PLUS_C__AS_MULTIPLE_OF_D(a,b,c,d) AT_LEAST_ONE_N_HALF_OF_X_AS_MULTIPLE_OF_Y((b)+(c),d)
+#define AT_LEAST_ONE_N_HALF_OF_s_B_PLUS_C_s_AS_MULTIPLE_OF_D(a,b,c,d) AT_LEAST_ONE_N_HALF_OF_X_AS_MULTIPLE_OF_Y((b)+(c),d)
 
 struct pvoid_with_size_n_capacity{void *obj; size_t si; size_t cap;};
 struct pvoid_with_pend_n_capacity{void *obj; void *pend; size_t cap;};
