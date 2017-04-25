@@ -100,6 +100,7 @@ template<class T> T ret_arg_or_valid_ph_ptr(T ptr){
 #define GET_BIT_FROM_OBJ(ind,obj) ( (((unsigned char *)obj)[(ind)/8]>>(ind)%8) % 2 )
 #define SET_BIT_IN_OBJ(ind,obj) //undone
 
+#include <cstring>
 
 //"Where an argument declared as size_t n specifies the length of the array for a function, n can have the value zero on a call to that function. Unless explicitly stated otherwise in the description of a particular function in this subclause, pointer arguments on such a call shall still have valid values, as described in 7.1.4"
 //so checking len is only useful when pointers can be NULL
@@ -280,7 +281,9 @@ struct pvoid_with_pend_n_capacity{void *obj; void *pend; size_t cap;};
 
 
 
+//you can use std::search in c++ instead of this macro (or find function in the case of string)
 //assume hl>=nl>1
+//note pchar doesn't point to the first char
 #define UNSAFE_MEMMEMs(pchar,h,hl,n,nl,caseNotFound,caseFound){\
 	(pchar)=(char *)memchr(h,((unsigned char *)(n))[0],(hl)-(nl)+1);\
 	for(;;){\
@@ -427,7 +430,7 @@ CPPRS_COMMON_SP void clog_put_time_YmdHMS_localtime_ts_now(void){
 	std::clog<<std::put_time(&tm_,"%Y%m%d%H%M%S");
 }
 
-//decltype(auto) also works, but auto& is better because no explicit array? (auto& l="some literal str";)
+//decltype(auto) also works, but `auto &` is better because no explicit array? (auto &l="some literal str";)
 //? does using this template a lot cause bloat in binary size?
 template<class ContainerT,class LiteralT>
 void insert_end_literal(ContainerT &v,LiteralT &l){
@@ -476,6 +479,8 @@ void resize_write_u32le(T &b,uint32_t u){
 	write_u32le(b.data()+b.size()-4,u);
 }
 
+#include <fstream>
+
 //this function is bad? it's slow? it has side effects? it might not even work?
 template<class T>
 auto getfilesizeusingifstream(const T &filenm){
@@ -488,6 +493,28 @@ auto getfilesizeusingifstream(const T &filenm){
 	ifstre_.close();
 	if(!ifstre_)throw std::runtime_error("close err "+STR_FILE_FUNC_XSTR_LINE);
 	return tbr;
+}
+
+
+template<class T>
+auto readwholefileintovectorchar(const T &filenm){//optimize use filesystem::file_size? but in that case you'd use unique_ptr instead of vector<char>?
+	constexpr size_t initsi=0x1000;//std::vector<char>::size_type will be deprecated in c++17?
+	std::vector<char> tbr(initsi);
+	std::ifstream ifstre_(filenm,std::ios_base::binary);
+	if(!ifstre_)throw std::runtime_error("file err "+STR_FILE_FUNC_XSTR_LINE);
+	for(size_t fsi=0;;){
+		if(!ifstre_.read(tbr.data()+fsi,initsi)){
+			if(!ifstre_.eof())throw std::runtime_error("read err "+STR_FILE_FUNC_XSTR_LINE);
+			fsi+=ifstre_.gcount();//?
+			ifstre_.clear(); ifstre_.close();
+			if(!ifstre_)throw std::runtime_error("close err "+STR_FILE_FUNC_XSTR_LINE);
+			tbr.resize(fsi);
+			tbr.shrink_to_fit();//?
+			return tbr;
+		}
+		fsi+=initsi;
+		tbr.resize(fsi+initsi);
+	}
 }
 
 template<class T=uintmax_t,class Tb,class Te>
@@ -512,4 +539,10 @@ auto strstrehexsetfillwrite(T pint,size_t len){
 	for(size_t i=0;i<len;++i)
 		oss<<std::setw(2)<<(unsigned)(unsigned char)pint[i];//note unsigned char doesn't work?
 	return oss;
+}
+
+//interval is [s:e)
+template<class T1,class T2,class T3, class T4>
+bool check2intervalsoverlap(T1 so1,T2 eo1,T3 so2,T4 eo2){
+	return so1<eo2 && so2<eo1;
 }
