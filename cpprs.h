@@ -495,19 +495,15 @@ auto getfilesizeusingifstream(const T &filenm){
 	return tbr;
 }
 
-
-template<class T>
-auto readwholefileintovectorchar(const T &filenm){//optimize use filesystem::file_size? but in that case you'd use unique_ptr instead of vector<char>?
-	constexpr size_t initsi=0x1000;//std::vector<char>::size_type will be deprecated in c++17?
-	std::vector<char> tbr(initsi);
-	std::ifstream ifstre_(filenm,std::ios_base::binary);
-	if(!ifstre_)throw std::runtime_error("file err "+STR_FILE_FUNC_XSTR_LINE);
+template<
+	size_t initsi=0x1000,//std::vector<typename T::char_type>::size_type will be deprecated in c++17?
+	class T>
+auto readstreamintovector(T &istre){
+	std::vector<typename T::char_type> tbr(initsi);
 	for(size_t fsi=0;;){
-		if(!ifstre_.read(tbr.data()+fsi,initsi)){
-			if(!ifstre_.eof())throw std::runtime_error("read err "+STR_FILE_FUNC_XSTR_LINE);
-			fsi+=ifstre_.gcount();//?
-			ifstre_.clear(); ifstre_.close();
-			if(!ifstre_)throw std::runtime_error("close err "+STR_FILE_FUNC_XSTR_LINE);
+		if(!istre.read(tbr.data()+fsi,initsi)){
+			if(!istre.eof())throw std::runtime_error("read err "+STR_FILE_FUNC_XSTR_LINE);
+			fsi+=istre.gcount();//?
 			tbr.resize(fsi);
 			tbr.shrink_to_fit();//?
 			return tbr;
@@ -515,6 +511,16 @@ auto readwholefileintovectorchar(const T &filenm){//optimize use filesystem::fil
 		fsi+=initsi;
 		tbr.resize(fsi+initsi);
 	}
+}
+
+template<class T>
+auto readwholefileintovectorchar(const T &filenm){//optimize use filesystem::file_size? but in that case you'd use unique_ptr instead of vector<char>?
+	std::ifstream ifstre_(filenm,std::ios_base::binary);
+	if(!ifstre_)throw std::runtime_error("file err "+STR_FILE_FUNC_XSTR_LINE);
+	auto tbr=readstreamintovector(ifstre_);
+	ifstre_.clear(); ifstre_.close();
+	if(!ifstre_)throw std::runtime_error("close err "+STR_FILE_FUNC_XSTR_LINE);
+	return tbr;
 }
 
 template<class T=uintmax_t,class Tb,class Te>
