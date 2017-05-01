@@ -330,6 +330,8 @@ struct pvoid_with_pend_n_capacity{void *obj; void *pend; size_t cap;};
 
 #include <iomanip>
 
+#include <cassert>
+
 //1st method for throwing from destructor
 #if defined(__GNUC__) && __GNUC__<6
 #else
@@ -394,7 +396,7 @@ struct e_already_logged{};
 #define STD_CLOG_TIME_FILE_FUNC_LINE_FLUSH_NOEXCEPTs {try{STD_CLOG_TIME_FILE_FUNC_LINE_FLUSH;}catch(...){}}
 #define STD_CLOG_TIME_FILE_FUNC_LINE_EX_FLUSH_NOEXCEPTs(e) {try{STD_CLOG_TIME_FILE_FUNC_LINE_EX_FLUSH(e);}catch(...){}}
 
-#define STD_CLOG_FILE_FUNC_LINE (std::clog<<" " __FILE__ " "<<__func__<<"," XSTR(__LINE__) "\n")
+#define STD_CLOG_FILE_FUNC_LINE (std::clog<<__FILE__ " "<<__func__<<"," XSTR(__LINE__) "\n")
 #define STD_CLOG_FILE_FUNC_LINE_FLUSH (STD_CLOG_FILE_FUNC_LINE<<std::flush)
 #define STD_CLOG_FILE_FUNC_LINE_EX_FLUSH(e) (STD_CLOG_FILE_FUNC_LINE<<e.what()<<'\n'<<std::flush)
 #define STD_CLOG_FILE_FUNC_LINE_FLUSH_NOEXCEPTs {try{STD_CLOG_FILE_FUNC_LINE_FLUSH;}catch(...){}}
@@ -496,6 +498,7 @@ auto getfilesizeusingifstream(const T &filenm){
 }
 
 template<
+	size_t sioftr=0,
 	size_t initsi=0x1000,//std::vector<typename T::char_type>::size_type will be deprecated in c++17?
 	class T>
 auto readstreamintovector(T &istre){
@@ -504,7 +507,7 @@ auto readstreamintovector(T &istre){
 		if(!istre.read(tbr.data()+fsi,initsi)){
 			if(!istre.eof())throw std::runtime_error("read err "+STR_FILE_FUNC_XSTR_LINE);
 			fsi+=istre.gcount();//?
-			tbr.resize(fsi);
+			tbr.resize(fsi+sioftr);
 			tbr.shrink_to_fit();//?
 			return tbr;
 		}
@@ -526,13 +529,30 @@ auto readwholefileintovectorchar(const T &filenm){//optimize use filesystem::fil
 template<class T=uintmax_t,class Tb,class Te>
 T nthpowerof(Tb base,Te ex){//optimize in loop, square the base for the number of bit times in ex, instead of multiplying one by one
 	if(!ex)return 1;
-	assert(ex>=0);
+	assert(ex>0);
 	T tbr=1;
 	T cob=base;
 	for(;;){
 		if(ex%2)tbr*=cob;
 		if(!(ex/=2))break;
 		cob*=cob;
+	}
+	return tbr;
+}
+
+template<class... Ts>
+constexpr auto safeaverage(Ts ... nums){
+	uintmax_t tbr=0;
+	uintmax_t tem=0;
+	for(auto n : {nums...}){
+		tbr+=n/sizeof...(nums);
+		auto remainder=n%sizeof...(nums);
+		if(sizeof...(nums)-tem>remainder){
+			tem+=remainder;
+		}else{
+			tem-=sizeof...(nums)-remainder;
+			++tbr;
+		}
 	}
 	return tbr;
 }
