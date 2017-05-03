@@ -508,7 +508,7 @@ auto readstreamintovector(T &istre){
 			if(!istre.eof())throw std::runtime_error("read err "+STR_FILE_FUNC_XSTR_LINE);
 			fsi+=istre.gcount();//?
 			tbr.resize(fsi+sioftr);
-			tbr.shrink_to_fit();//?
+			//tbr.shrink_to_fit();//?
 			return tbr;
 		}
 		fsi+=initsi;
