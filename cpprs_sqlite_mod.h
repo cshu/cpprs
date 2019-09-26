@@ -17,6 +17,7 @@
 ** handle case conversions for the UTF character set since the tables
 ** involved are nearly as big or bigger than SQLite itself.
 */
+//todo for C++17 use global inline variable instead??
 const unsigned char rs_sqlite3UpperToLower[] = {
 #ifdef SQLITE_ASCII
       0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17,

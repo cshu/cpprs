@@ -35,7 +35,8 @@ struct filesystem_entry{filesystem_name nm; WIN32_FILE_ATTRIBUTE_DATA fileAttrDt
 
 //undone might need to add bit array to the struct for marking which field has been set (size, time, blabla)
 #else
-typedef char *filesystem_name
+#include <sys/stat.h>
+typedef char *filesystem_name;
 struct filesystem_entry{filesystem_name nm; struct stat st_stat;};
 #define GET_FILESYSTEM_NAME_WITH_UTF8STRu(ui,str,fname,caseFail,caseDone){(fname)=(str);}
 #define MAKE_FILESYSTEM_NAME_WITH_UTF8STRu(ui,str,fname,caseFail,caseDone){\
@@ -109,7 +110,7 @@ struct filesystem_entry{filesystem_name nm; struct stat st_stat;};
         })\
 }
 #else
-#error Not implemented
+//#error Not implemented
 //struct stat;
 //stat(,&st)
 //!S_ISREG(st.st_mode)

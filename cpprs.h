@@ -402,7 +402,8 @@ struct e_already_logged{};
 #define STD_CLOG_FILE_FUNC_LINE_FLUSH_NOEXCEPTs {try{STD_CLOG_FILE_FUNC_LINE_FLUSH;}catch(...){}}
 #define STD_CLOG_FILE_FUNC_LINE_EX_FLUSH_NOEXCEPTs(e) {try{STD_CLOG_FILE_FUNC_LINE_EX_FLUSH(e);}catch(...){}}
 
-template<bool b> void static_assert_in_template(){
+//?? the inline is redundant?
+template<bool b> inline void static_assert_in_template(){
 	static_assert(b,"");
 }
 #define STATIC_ASSERT_IN_LAMBDA []{static_assert(true,"");}
