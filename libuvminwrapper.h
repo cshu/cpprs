@@ -14,7 +14,7 @@
 			}
 		}
 		//undone
-		~loop(){
+		virtual ~loop(){
 			if(uv_loop_close(puvl)){
 				LOG_ERR(log)
 			}

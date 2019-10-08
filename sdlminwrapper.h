@@ -17,7 +17,7 @@ struct sdl{
 			throw 0;//undone
 		}
 	}
-	~sdl(){
+	virtual ~sdl(){
 		SDL_Quit();
 	}
 };
@@ -30,7 +30,7 @@ struct window{
 			throw 0;//undone
 		}
 	}
-	~window(){
+	virtual ~window(){
 		SDL_DestroyWindow(sdlw);
 	}
 };

@@ -348,7 +348,7 @@ struct tem_set_sue{
 	tem_set_sue(){
 		sue()=std::uncaught_exceptions();
 	}
-	~tem_set_sue(){
+	virtual ~tem_set_sue(){
 		sue()=prev;
 	}
 };

@@ -7,11 +7,11 @@
 struct slw_stmt{
         sqlite3_stmt* pstmt;
 #ifdef NDEBUG
-	~slw_stmt(){//? maybe you should add noexcept(false) to keep the same signature
+	virtual ~slw_stmt(){//? maybe you should add noexcept(false) to keep the same signature
 		sqlite3_finalize(pstmt);
 	}
 #else
-	~slw_stmt()noexcept(false){
+	virtual ~slw_stmt()noexcept(false){
 		AUTO_COPY_OF_SUE_CLEAR_SUE_TRYs
 		int ib=sqlite3_finalize(pstmt);
 		if(ib!=SQLITE_OK){LOG_Is(ib) throw 0;}
