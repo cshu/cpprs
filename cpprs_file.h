@@ -6,7 +6,7 @@
 #endif
 #include <iostream>
 #include <cstdio>
-decltype(auto) create_tmp_file(void){
+CPPRS_COMMON_SP decltype(auto) create_tmp_file(void){
 	unique_ptr<char[]> chbuf(new char[L_tmpnam]);
 	if(!std::tmpnam(chbuf.get())){
 		CREATE_TMP_FILE_CASE_FAIL
